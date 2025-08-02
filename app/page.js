@@ -11,10 +11,15 @@ export default function Page() {
 
     const handler = async (event) => {
       try {
+        console.log('📨 메시지 받음:', event.data)
+        
         // Handle both string and object data from WebView
         const data = typeof event.data === 'string' ? JSON.parse(event.data) : event.data
+        console.log('📋 파싱된 데이터:', data)
         
         if (data.type === 'LOGIN_TOKEN') {
+          console.log('🔑 토큰 처리 시작:', data.token ? '토큰 있음' : '토큰 없음')
+          
           // 웹과 네이티브 모두 같은 API 사용
           const res = await fetch('/api/auth/web-google-login', {
             method: 'POST',
@@ -24,6 +29,8 @@ export default function Page() {
           })
 
           const result = await res.json()
+          console.log('📡 API 응답:', result)
+          
           if (result.success) {
             alert(`✅ 로그인 성공: ${result.user.email}`)
           } else {
@@ -31,6 +38,8 @@ export default function Page() {
           }
         } else if (data.type === 'LOGIN_ERROR') {
           alert(`❌ 로그인 실패: ${data.error}`)
+        } else {
+          console.log('❓ 알 수 없는 메시지 타입:', data.type)
         }
       } catch (err) {
         console.error('토큰 처리 에러', err)
