@@ -51,8 +51,9 @@ export default function Page() {
       }
     }
 
-    // ✅ 핵심 수정: window → document
-    document.addEventListener('message', handler)
+    // 웹뷰와 웹 브라우저 모두에서 메시지 수신
+    document.addEventListener('message', handler) // 웹뷰용
+    window.addEventListener('message', handler)   // 웹 브라우저용
 
     setTimeout(() => {
       setStatus('✅ 메시지 리스너 등록 완료 - 메시지 대기 중...')
@@ -61,6 +62,7 @@ export default function Page() {
 
     return () => {
       document.removeEventListener('message', handler)
+      window.removeEventListener('message', handler)
     }
   }, [])
 
