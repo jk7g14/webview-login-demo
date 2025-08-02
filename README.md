@@ -1,6 +1,43 @@
 # WebView Google 로그인 데모
 
-React Native WebView와 웹 브라우저 모두에서 구글 로그인을 테스트할 수 있는 Next.js 데모 애플리케이션입니다.
+React Native WebView와 웹 브라우저 모두에서 구글 로그인을 테스트할 수 있는 **Next.js 데모 애플리케이션**입니다.
+
+## 핵심 개념
+
+### React Native ↔ WebView 통신 규칙
+
+**반드시 지켜야 할 postMessage 형식:**
+
+1. **React Native → WebView 요청**
+
+   ```javascript
+   // React Native에서 WebView로 구글 로그인 요청
+   webviewRef.current.postMessage('GOOGLE_LOGIN_REQUEST');
+   ```
+
+2. **React Native → WebView 토큰 전송(이런식으로 보내고있다는 것만 보여주기 위해 적어놓음)**
+   ```javascript
+   // React Native에서 WebView로 ID 토큰 전송
+   webviewRef.current.postMessage(
+     JSON.stringify({
+       type: 'LOGIN_TOKEN', //받을 때의 key
+       token:
+         'sdlkfjsldkfjsldkfjsldkfjlskwd;fjlskdjflskdjflskdjflskdjflsdkjflskdjflskdjflskd',
+     })
+   );
+   ```
+
+### WebView에서 메시지 수신
+
+**웹뷰에서는 반드시 `document`에 리스너 등록:**
+
+```javascript
+// ✅ 올바른 방법 (웹뷰용)
+document.addEventListener('message', handler);
+
+// ❌ 잘못된 방법 (웹 브라우저용)
+window.addEventListener('message', handler);
+```
 
 ## 기능
 
@@ -183,4 +220,3 @@ export async function POST(req) {
 2. **React Native**: 메시지 수신 → 구글 로그인 실행 → ID 토큰 받기 → `postMessage()`로 웹뷰에 전송
 3. **웹뷰**: `document.addEventListener('message')`로 메시지 수신
 4. **웹 페이지**: ID 토큰을 Google API로 검증 → 사용자 정보 추출 → 성공 메시지 표시
-
