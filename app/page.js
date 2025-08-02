@@ -12,6 +12,7 @@ export default function Page() {
     
     // 메시지 리스너 등록 확인
     setStatus('🔄 메시지 리스너 등록됨')
+    console.log('🔄 메시지 리스너 등록됨')
 
     const handler = async (event) => {
       try {
@@ -44,9 +45,12 @@ export default function Page() {
           }
         } else if (data.type === 'LOGIN_ERROR') {
           setStatus(`❌ 로그인 실패: ${data.error}`)
+        } else if (data.type === 'TEST') {
+          setStatus(`🧪 테스트 메시지 받음: ${data.message}`)
         } else if (data.type) {
           // LOGIN_TOKEN이나 LOGIN_ERROR가 아닌 다른 메시지는 무시
           console.log('❓ 알 수 없는 메시지 타입:', data.type)
+          setStatus(`❓ 알 수 없는 메시지 타입: ${data.type}`)
         }
       } catch (err) {
         console.error('토큰 처리 에러', err)
@@ -54,7 +58,15 @@ export default function Page() {
       }
     }
 
+    // 메시지 리스너 등록
     window.addEventListener('message', handler)
+    
+    // 웹뷰에서 메시지 리스너가 제대로 등록되었는지 확인
+    setTimeout(() => {
+      setStatus('✅ 메시지 리스너 등록 완료 - 메시지 대기 중...')
+      console.log('✅ 메시지 리스너 등록 완료')
+    }, 1000)
+    
     return () => window.removeEventListener('message', handler)
   }, [])
 
@@ -105,6 +117,18 @@ export default function Page() {
         onClick={requestLogin}
       >
         Google 로그인 요청
+      </button>
+      <button
+        style={{ fontSize: 14, padding: 8, borderRadius: 6, border: '1px solid #ccc', cursor: 'pointer', backgroundColor: '#f0f0f0' }}
+        onClick={() => {
+          // 웹뷰에서 직접 메시지 테스트
+          window.postMessage(JSON.stringify({
+            type: 'TEST',
+            message: '웹뷰에서 직접 보낸 테스트 메시지'
+          }), '*');
+        }}
+      >
+        웹뷰 메시지 테스트
       </button>
       <p style={{ fontSize: 14, color: '#666', textAlign: 'center', maxWidth: 300 }}>
         {isWebView ? 'React Native WebView에서 실행 중' : '웹 브라우저에서 실행 중'}
