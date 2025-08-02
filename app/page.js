@@ -7,10 +7,8 @@ export default function Page() {
   const [status, setStatus] = useState('대기 중...')
 
   useEffect(() => {
-    // 클라이언트 사이드에서만 window 객체 접근
     setIsWebView(!!window.ReactNativeWebView)
-    
-    // 메시지 리스너 등록 확인
+
     setStatus('🔄 메시지 리스너 등록됨')
     console.log('🔄 메시지 리스너 등록됨')
 
@@ -18,16 +16,14 @@ export default function Page() {
       try {
         console.log('📨 메시지 받음:', event.data)
         setStatus('📨 메시지 받음: ' + JSON.stringify(event.data))
-        
-        // Handle both string and object data from WebView
+
         const data = typeof event.data === 'string' ? JSON.parse(event.data) : event.data
         console.log('📋 파싱된 데이터:', data)
         setStatus('📋 파싱된 데이터: ' + JSON.stringify(data))
-        
+
         if (data.type === 'LOGIN_TOKEN') {
           console.log('🔑 토큰 처리 시작:', data.token ? '토큰 있음' : '토큰 없음')
-          
-          // 웹과 네이티브 모두 같은 API 사용
+
           const res = await fetch('/api/auth/web-google-login', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -37,7 +33,7 @@ export default function Page() {
 
           const result = await res.json()
           console.log('📡 API 응답:', result)
-          
+
           if (result.success) {
             setStatus(`✅ 로그인 성공: ${result.user.email}`)
           } else {
@@ -48,7 +44,6 @@ export default function Page() {
         } else if (data.type === 'TEST') {
           setStatus(`🧪 테스트 메시지 받음: ${data.message}`)
         } else if (data.type) {
-          // LOGIN_TOKEN이나 LOGIN_ERROR가 아닌 다른 메시지는 무시
           console.log('❓ 알 수 없는 메시지 타입:', data.type)
           setStatus(`❓ 알 수 없는 메시지 타입: ${data.type}`)
         }
@@ -58,25 +53,24 @@ export default function Page() {
       }
     }
 
-    // 메시지 리스너 등록
-    window.addEventListener('message', handler)
-    
-    // 웹뷰에서 메시지 리스너가 제대로 등록되었는지 확인
+    // ✅ 핵심 수정: window → document
+    document.addEventListener('message', handler)
+
     setTimeout(() => {
       setStatus('✅ 메시지 리스너 등록 완료 - 메시지 대기 중...')
       console.log('✅ 메시지 리스너 등록 완료')
     }, 1000)
-    
-    return () => window.removeEventListener('message', handler)
+
+    return () => {
+      document.removeEventListener('message', handler)
+    }
   }, [])
 
   const requestLogin = () => {
     if (window.ReactNativeWebView) {
-      // React Native WebView에서 실행 중
       setStatus('🔄 React Native에서 구글 로그인 요청 중...')
       window.ReactNativeWebView.postMessage('GOOGLE_LOGIN_REQUEST')
     } else {
-      // 웹 브라우저에서 실행 중
       const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID
       if (!googleClientId) {
         setStatus('❌ Google OAuth 클라이언트 ID가 설정되지 않았습니다.')
@@ -86,15 +80,15 @@ export default function Page() {
       const redirectUri = `${window.location.origin}/api/auth/web-google-login/callback`
       const scope = 'email profile'
       const responseType = 'code'
-      
-      const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
+
+      const googleAuthUrl =
+        `https://accounts.google.com/o/oauth2/v2/auth?` +
         `client_id=${googleClientId}&` +
         `redirect_uri=${encodeURIComponent(redirectUri)}&` +
         `scope=${encodeURIComponent(scope)}&` +
         `response_type=${responseType}&` +
         `access_type=offline`
 
-      // 팝업 창으로 구글 로그인 열기
       setStatus('🔄 구글 로그인 팝업 열기 중...')
       const popup = window.open(
         googleAuthUrl,
