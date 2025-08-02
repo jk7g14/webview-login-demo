@@ -34,8 +34,10 @@ export async function GET(req) {
     })
 
     if (!tokenResponse.ok) {
+      const errorText = await tokenResponse.text()
+      console.error('Token exchange failed:', tokenResponse.status, errorText)
       return new Response(
-        `<html><body><script>window.opener.postMessage({ type: 'LOGIN_ERROR', error: 'Failed to exchange code for token' }, '*'); window.close();</script></body></html>`,
+        `<html><body><script>window.opener.postMessage({ type: 'LOGIN_ERROR', error: 'Failed to exchange code for token: ${tokenResponse.status}' }, '*'); window.close();</script></body></html>`,
         { headers: { 'Content-Type': 'text/html' } }
       )
     }

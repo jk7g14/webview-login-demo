@@ -2,31 +2,54 @@ export async function POST(req) {
   try {
     const { code, token } = await req.json()
 
-    // ID 토큰이 있는 경우 (React Native에서 온 경우)
+    // 토큰이 있는 경우 (React Native에서 온 ID 토큰 또는 웹에서 온 액세스 토큰)
     if (token) {
-      const googleRes = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${token}`)
-      if (!googleRes.ok) {
-        return new Response(JSON.stringify({ success: false, error: 'Invalid token' }), {
+      let userInfo
+      
+      try {
+        // 먼저 ID 토큰으로 시도 (React Native)
+        const idTokenRes = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${token}`)
+        if (idTokenRes.ok) {
+          userInfo = await idTokenRes.json()
+        } else {
+          // ID 토큰이 아니면 액세스 토큰으로 사용자 정보 가져오기 (웹)
+          const userInfoRes = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          })
+          
+          if (!userInfoRes.ok) {
+            return new Response(JSON.stringify({ success: false, error: 'Invalid token' }), {
+              status: 401,
+              headers: { 'Content-Type': 'application/json' },
+            })
+          }
+          
+          userInfo = await userInfoRes.json()
+        }
+        
+        const email = userInfo.email || 'no-email'
+        const name = userInfo.name || 'No Name'
+
+        const headers = new Headers()
+        headers.append(
+          'Set-Cookie',
+          `session_email=${email}; Path=/; HttpOnly; Secure; SameSite=None`
+        )
+        headers.append('Content-Type', 'application/json')
+
+        return new Response(JSON.stringify({ success: true, user: { email, name } }), {
+          status: 200,
+          headers,
+        })
+      } catch (err) {
+        console.error('Token validation error:', err)
+        return new Response(JSON.stringify({ success: false, error: 'Token validation failed' }), {
           status: 401,
           headers: { 'Content-Type': 'application/json' },
         })
       }
-
-      const userInfo = await googleRes.json()
-      const email = userInfo.email || 'no-email'
-      const name = userInfo.name || 'No Name'
-
-      const headers = new Headers()
-      headers.append(
-        'Set-Cookie',
-        `session_email=${email}; Path=/; HttpOnly; Secure; SameSite=None`
-      )
-      headers.append('Content-Type', 'application/json')
-
-      return new Response(JSON.stringify({ success: true, user: { email, name } }), {
-        status: 200,
-        headers,
-      })
     }
 
     // 인증 코드가 있는 경우 (웹 브라우저에서 온 경우)
