@@ -4,20 +4,24 @@ import { useEffect, useState } from 'react'
 
 export default function Page() {
   const [isWebView, setIsWebView] = useState(false)
+  const [status, setStatus] = useState('대기 중...')
 
   useEffect(() => {
     // 클라이언트 사이드에서만 window 객체 접근
     setIsWebView(!!window.ReactNativeWebView)
+    
+    // 메시지 리스너 등록 확인
+    setStatus('🔄 메시지 리스너 등록됨')
 
     const handler = async (event) => {
       try {
         console.log('📨 메시지 받음:', event.data)
-        alert('📨 메시지 받음: ' + JSON.stringify(event.data))
+        setStatus('📨 메시지 받음: ' + JSON.stringify(event.data))
         
         // Handle both string and object data from WebView
         const data = typeof event.data === 'string' ? JSON.parse(event.data) : event.data
         console.log('📋 파싱된 데이터:', data)
-        alert('📋 파싱된 데이터: ' + JSON.stringify(data))
+        setStatus('📋 파싱된 데이터: ' + JSON.stringify(data))
         
         if (data.type === 'LOGIN_TOKEN') {
           console.log('🔑 토큰 처리 시작:', data.token ? '토큰 있음' : '토큰 없음')
@@ -34,17 +38,19 @@ export default function Page() {
           console.log('📡 API 응답:', result)
           
           if (result.success) {
-            alert(`✅ 로그인 성공: ${result.user.email}`)
+            setStatus(`✅ 로그인 성공: ${result.user.email}`)
           } else {
-            alert(`❌ 실패: ${result.error}`)
+            setStatus(`❌ 실패: ${result.error}`)
           }
         } else if (data.type === 'LOGIN_ERROR') {
-          alert(`❌ 로그인 실패: ${data.error}`)
-        } else {
+          setStatus(`❌ 로그인 실패: ${data.error}`)
+        } else if (data.type) {
+          // LOGIN_TOKEN이나 LOGIN_ERROR가 아닌 다른 메시지는 무시
           console.log('❓ 알 수 없는 메시지 타입:', data.type)
         }
       } catch (err) {
         console.error('토큰 처리 에러', err)
+        setStatus(`❌ 에러: ${err.message}`)
       }
     }
 
@@ -55,12 +61,13 @@ export default function Page() {
   const requestLogin = () => {
     if (window.ReactNativeWebView) {
       // React Native WebView에서 실행 중
+      setStatus('🔄 React Native에서 구글 로그인 요청 중...')
       window.ReactNativeWebView.postMessage('GOOGLE_LOGIN_REQUEST')
     } else {
       // 웹 브라우저에서 실행 중
       const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID
       if (!googleClientId) {
-        alert('Google OAuth 클라이언트 ID가 설정되지 않았습니다.')
+        setStatus('❌ Google OAuth 클라이언트 ID가 설정되지 않았습니다.')
         return
       }
 
@@ -76,6 +83,7 @@ export default function Page() {
         `access_type=offline`
 
       // 팝업 창으로 구글 로그인 열기
+      setStatus('🔄 구글 로그인 팝업 열기 중...')
       const popup = window.open(
         googleAuthUrl,
         'google-login',
@@ -83,7 +91,7 @@ export default function Page() {
       )
 
       if (!popup) {
-        alert('팝업이 차단되었습니다. 팝업 차단을 해제해주세요.')
+        setStatus('❌ 팝업이 차단되었습니다. 팝업 차단을 해제해주세요.')
       }
     }
   }
@@ -101,6 +109,22 @@ export default function Page() {
       <p style={{ fontSize: 14, color: '#666', textAlign: 'center', maxWidth: 300 }}>
         {isWebView ? 'React Native WebView에서 실행 중' : '웹 브라우저에서 실행 중'}
       </p>
+      <div style={{ 
+        fontSize: 12, 
+        color: '#333', 
+        textAlign: 'center', 
+        maxWidth: 400, 
+        padding: 10, 
+        backgroundColor: '#f5f5f5', 
+        borderRadius: 8,
+        border: '1px solid #ddd',
+        minHeight: 60,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center'
+      }}>
+        {status}
+      </div>
     </main>
   )
 }
