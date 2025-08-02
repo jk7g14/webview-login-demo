@@ -12,10 +12,12 @@ export default function Page() {
     const handler = async (event) => {
       try {
         console.log('📨 메시지 받음:', event.data)
+        alert('📨 메시지 받음: ' + JSON.stringify(event.data))
         
         // Handle both string and object data from WebView
         const data = typeof event.data === 'string' ? JSON.parse(event.data) : event.data
         console.log('📋 파싱된 데이터:', data)
+        alert('📋 파싱된 데이터: ' + JSON.stringify(data))
         
         if (data.type === 'LOGIN_TOKEN') {
           console.log('🔑 토큰 처리 시작:', data.token ? '토큰 있음' : '토큰 없음')
