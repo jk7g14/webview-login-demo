@@ -179,15 +179,8 @@ export async function POST(req) {
 
 ## 플로우 요약
 
-### React Native WebView 플로우
-
 1. **웹뷰**: 로그인 버튼 클릭 → `window.ReactNativeWebView.postMessage('GOOGLE_LOGIN_REQUEST')` 전송
 2. **React Native**: 메시지 수신 → 구글 로그인 실행 → ID 토큰 받기 → `postMessage()`로 웹뷰에 전송
 3. **웹뷰**: `document.addEventListener('message')`로 메시지 수신
 4. **웹 페이지**: ID 토큰을 Google API로 검증 → 사용자 정보 추출 → 성공 메시지 표시
 
-### 웹 브라우저 플로우
-
-1. **팝업**: 구글 로그인 → 인증 코드 받기
-2. **콜백**: 인증 코드를 액세스 토큰으로 교환
-3. **웹 페이지**: 액세스 토큰으로 사용자 정보 가져오기 → 성공 메시지 표시
