@@ -41,9 +41,9 @@ export default function Page() {
           }
         } else if (data.type === 'LOGIN_ERROR') {
           setStatus(`❌ 로그인 실패: ${data.error}`)
-        } else if (data.type) {
-          console.log('❓ 알 수 없는 메시지 타입:', data.type)
-          setStatus(`❓ 알 수 없는 메시지 타입: ${data.type}`)
+        } else if (data.type && data.type !== 'LOGIN_TOKEN' && data.type !== 'LOGIN_ERROR') {
+          // LOGIN_TOKEN이나 LOGIN_ERROR가 아닌 다른 메시지는 무시하고 상태 유지
+          console.log('❓ 무시된 메시지 타입:', data.type)
         }
       } catch (err) {
         console.error('토큰 처리 에러', err)
